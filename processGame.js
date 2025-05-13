@@ -123,6 +123,7 @@ const createGame = async (createdData) => {
     Authorization: `Bearer ${accessToken}`,
   };
   const objData = await objectForGame(createdData, headerFromApi);
+  console.log(objData, "objFtaatattatatattatat");
   await updateOrCreateGameDataWithNewFeilds(objData);
 };
 function addPublishedAtIfRequired(gameData) {
@@ -154,6 +155,7 @@ const processGames = async (games) => {
       .join(",")}); limit ${siteUrls.length};`;
 
     updatedDataWithSiteUrl = await fetchFromIGDB(siteUrlQuery);
+    console.log(updatedDataWithSiteUrl, "llllllllll");
   }
   for (let i = 0; i < games.length; i++) {
     const game = games[i];
@@ -177,6 +179,7 @@ const processGames = async (games) => {
       updatedData = updatedDataWithSiteUrl.find(
         (data) => data.url === game.url
       );
+      console.log(updatedData, "llllllllppppppppppp", game);
       if (updatedData) {
         await createGame(updatedData);
       }
@@ -240,183 +243,356 @@ const createGameEntryInStrapi = async (gameData) => {
   }
 };
 
+// const handleSimilarGames = async (
+//   parsedData,
+//   headerFromApi,
+//   processedGames = []
+// ) => {
+//   if (parsedData.similar_games) {
+//     const categoryMapping = {
+//       0: "main_game",
+//       1: "dlc_addon",
+//       2: "expansion",
+//       3: "bundle",
+//       4: "standalone_expansion",
+//       5: "mod",
+//       6: "episode",
+//       7: "season",
+//       8: "remake",
+//       9: "remaster",
+//       10: "expanded_game",
+//       11: "port",
+//       12: "fork",
+//       13: "pack",
+//       14: "update",
+//     };
+//     let similarGamesArray = [];
+
+//     if (typeof parsedData.similar_games === "string") {
+//       parsedData.similar_games = parsedData.similar_games
+//         .replace(/{|}/g, "")
+//         .split(",")
+//         .map((id) => id.trim());
+//     }
+//     if (parsedData.similar_games && parsedData.similar_games.length > 0) {
+//       try {
+//         const gameIds = parsedData.similar_games
+//           .map((game) => game.id)
+//           .join(",");
+//         const query = `fields *,genres.name,game_modes.name,player_perspectives.name,game_engines.name,involved_companies.developer,involved_companies.publisher,involved_companies.company.name,keywords.name,platforms.name,release_dates.*,screenshots.url,themes.name,videos.video_id,videos.name,websites.category,websites.url,language_supports.language.name,game_localizations.*,similar_games.*,external_games.name,cover.url,artworks.url,age_ratings.*,franchises.name,collections.name,release_dates.platform.*,alternative_names.name,similar_games.genres.name,similar_games.game_modes.name,similar_games.player_perspectives.name,similar_games.game_engines.name,similar_games.involved_companies.developer,similar_games.involved_companies.publisher,similar_games.involved_companies.company.name,similar_games.keywords.name,similar_games.platforms.name,similar_games.release_dates.*,similar_games.screenshots.url,similar_games.themes.name,similar_games.videos.video_id,similar_games.videos.name,similar_games.websites.category,similar_games.websites.url,similar_games.language_supports.language.name,similar_games.game_localizations.*,similar_games.similar_games.*,similar_games.external_games.name,similar_games.cover.url,similar_games.artworks.url,similar_games.age_ratings.*,similar_games.franchises.name,similar_games.collections.name,similar_games.release_dates.platform.*,expansions.*,similar_games.alternative_names.name,expansions.genres.name,expansions.game_modes.name,expansions.player_perspectives.name,expansions.game_engines.name,expansions.involved_companies.developer,expansions.involved_companies.publisher,expansions.involved_companies.company.name,expansions.keywords.name,expansions.platforms.name,expansions.release_dates.*,expansions.screenshots.url,expansions.themes.name,expansions.videos.video_id,expansions.videos.name,expansions.websites.category,expansions.websites.url,expansions.language_supports.language.name,expansions.game_localizations.*,expansions.similar_games.*,expansions.external_games.name,expansions.cover.url,expansions.artworks.url,expansions.age_ratings.*,expansions.franchises.name,expansions.collections.name,expansions.release_dates.platform.*,expansions.expansions.*,expansions.alternative_names.name; where id = (${gameIds});`;
+//         const similarGamesResponse = await fetchWithRetry(
+//           "https://api.igdb.com/v4/games",
+//           query,
+//           headerFromApi
+//         );
+//         // Process each similar game
+//         for (const similarGame of similarGamesResponse.data) {
+//           // Check if the game already exists in Strapi
+
+//           const existingGame = await checkIfGameExists(similarGame.slug);
+//           let gameId;
+//           if (existingGame) {
+//             // If the game exists, use its ID
+//             gameId = existingGame.id;
+//             similarGamesArray.push(gameId);
+//           } else {
+//             const categoryId = similarGame.category;
+//             const categoryName = categoryMapping[categoryId];
+//             const gameGenres = await handleGenres(similarGame);
+//             const gameModes = await handleGameModes(similarGame);
+//             const gamePlayerPerspectives = await handlePlayerPerspectives(
+//               similarGame
+//             );
+//             const gameThemes = await handleThemes(similarGame);
+//             const gameKeywords = await handleKeywords(similarGame);
+//             const gameAlternativeNames = await handleAlternativeNames(
+//               similarGame
+//             );
+//             const gameEngines = await handleGameEngines(similarGame);
+//             const gameLanguageSupports = await handleLanguageSupports(
+//               similarGame
+//             );
+//             const gameInvolvedCompanies = await handleInvolvedCompanies(
+//               similarGame
+//             );
+//             const gameFranchies = await handleFrenchies(similarGame);
+//             const externalGames = await handleExternalGames(similarGame);
+//             const gameCoverImage = await handleCoverImage(similarGame);
+//             const gameBackgroundImage = await handleBackgroundImage(
+//               similarGame
+//             );
+//             const gameScreenShots = await handleScreenShots(similarGame);
+//             const gameCollections = await handleCollections(similarGame);
+//             const gamePlatforms = await handlePlatforms(similarGame);
+//             const gameVideos = await handleVideos(similarGame);
+//             const gameWebsiteLinks = await handleWebsiteLinks(similarGame);
+//             const promtGeneratedDescription = await getRewrittenDescription(
+//               similarGame?.name,
+//               similarGame?.summary
+//             );
+//             const gameReleaseDates = await handleReleaseDates(
+//               similarGame,
+//               headerFromApi
+//             );
+//             const gameSeriesOrSpinOff = await handleSeriesAndSpinOff(
+//               similarGame,
+//               headerFromApi
+//             );
+//             // const expansionGames = await handleGameExpansions(
+//             //   parsedData,
+//             //   headerFromApi
+//             // );
+//             const relatedGames = await handleSimilarGames(
+//               { similar_games: similarGame.similar_games || [] },
+//               headerFromApi,
+//               [...processedGames, similarGame.id]
+//             );
+//             const newGame = {
+//               title: similarGame.name || null,
+//               slug: similarGame.slug || null,
+//               site_url: similarGame.url,
+//               genres: gameGenres || [],
+//               game_modes: gameModes || [],
+//               player_perspective: gamePlayerPerspectives || [],
+//               themes: gameThemes || [],
+//               keywords: gameKeywords || [],
+//               alternative_names: gameAlternativeNames || [],
+//               game_engines: gameEngines || [],
+//               language_supports: gameLanguageSupports || [],
+//               involved_companies:
+//                 (gameInvolvedCompanies &&
+//                   gameInvolvedCompanies?.involvedCompaniesArray) ||
+//                 [],
+//               publisher:
+//                 (gameInvolvedCompanies &&
+//                   gameInvolvedCompanies?.publishersArray) ||
+//                 [],
+//               developer:
+//                 gameInvolvedCompanies &&
+//                 gameInvolvedCompanies?.developersArray &&
+//                 gameInvolvedCompanies?.developersArray.length > 0
+//                   ? gameInvolvedCompanies?.developersArray
+//                   : [],
+//               franchises: gameFranchies || [],
+//               external_games: externalGames || [],
+//               coverImage: gameCoverImage || null,
+//               image: gameBackgroundImage || null,
+//               ...(gameScreenShots &&
+//                 gameScreenShots.length > 0 && {
+//                   screenshots: gameScreenShots,
+//                 }),
+//               collections: gameCollections || [],
+//               platforms: gamePlatforms || [],
+//               videos: gameVideos || [],
+//               website_links: gameWebsiteLinks || [],
+//               description: promtGeneratedDescription || null,
+//               releaseByPlatforms: {
+//                 release:
+//                   gameReleaseDates?.releaseByPlatformsArray &&
+//                   gameReleaseDates?.releaseByPlatformsArray.length > 0
+//                     ? gameReleaseDates?.releaseByPlatformsArray
+//                     : [],
+//               },
+//               devices: gameReleaseDates?.devicesArray || [],
+//               firstReleaseDate: gameReleaseDates?.earliestReleaseDate || null,
+//               latestReleaseDate: gameReleaseDates?.latestReleaseDate || null,
+//               // game_category: categoryName || null,
+//               aggregateRating: similarGame.aggregated_rating || null,
+//               series: gameSeriesOrSpinOff?.seriesName || null,
+//               isSpinOff: gameSeriesOrSpinOff?.isSpinOffName || null,
+//               // expansions: expansionGames || [],
+//               related_games: relatedGames || [],
+//               published_at: addPublishedAtIfRequired(similarGame),
+//               isUpdatedFromScript: true,
+//             };
+//             const createdGame = await createGameEntryInStrapi(newGame);
+//             gameId = createdGame.data.id;
+//             similarGamesArray.push(gameId);
+//           }
+//         }
+//         console.log(similarGamesArray, "similarGamesArray");
+//         // Return the array of similar game IDs
+//         return similarGamesArray;
+//       } catch (error) {
+//         console.error(`Failed to handle similar games: ${error.message}`);
+//         return [];
+//       }
+//     }
+//   }
+//   return [];
+// };
+
 const handleSimilarGames = async (
   parsedData,
   headerFromApi,
-  processedGames = []
+  processedGames = new Set()
 ) => {
-  if (parsedData.similar_games) {
-    const categoryMapping = {
-      0: "main_game",
-      1: "dlc_addon",
-      2: "expansion",
-      3: "bundle",
-      4: "standalone_expansion",
-      5: "mod",
-      6: "episode",
-      7: "season",
-      8: "remake",
-      9: "remaster",
-      10: "expanded_game",
-      11: "port",
-      12: "fork",
-      13: "pack",
-      14: "update",
-    };
-    let similarGamesArray = [];
+  if (!parsedData.similar_games) return [];
 
-    if (typeof parsedData.similar_games === "string") {
-      parsedData.similar_games = parsedData.similar_games
-        .replace(/{|}/g, "")
-        .split(",")
-        .map((id) => id.trim());
-    }
-    if (parsedData.similar_games && parsedData.similar_games.length > 0) {
-      try {
-        const gameIds = parsedData.similar_games
-          .map((game) => game.id)
-          .join(",");
-        const query = `fields *,genres.name,game_modes.name,player_perspectives.name,game_engines.name,involved_companies.developer,involved_companies.publisher,involved_companies.company.name,keywords.name,platforms.name,release_dates.*,screenshots.url,themes.name,videos.video_id,videos.name,websites.category,websites.url,language_supports.language.name,game_localizations.*,similar_games.*,external_games.name,cover.url,artworks.url,age_ratings.*,franchises.name,collections.name,release_dates.platform.*,alternative_names.name,similar_games.genres.name,similar_games.game_modes.name,similar_games.player_perspectives.name,similar_games.game_engines.name,similar_games.involved_companies.developer,similar_games.involved_companies.publisher,similar_games.involved_companies.company.name,similar_games.keywords.name,similar_games.platforms.name,similar_games.release_dates.*,similar_games.screenshots.url,similar_games.themes.name,similar_games.videos.video_id,similar_games.videos.name,similar_games.websites.category,similar_games.websites.url,similar_games.language_supports.language.name,similar_games.game_localizations.*,similar_games.similar_games.*,similar_games.external_games.name,similar_games.cover.url,similar_games.artworks.url,similar_games.age_ratings.*,similar_games.franchises.name,similar_games.collections.name,similar_games.release_dates.platform.*,expansions.*,similar_games.alternative_names.name,expansions.genres.name,expansions.game_modes.name,expansions.player_perspectives.name,expansions.game_engines.name,expansions.involved_companies.developer,expansions.involved_companies.publisher,expansions.involved_companies.company.name,expansions.keywords.name,expansions.platforms.name,expansions.release_dates.*,expansions.screenshots.url,expansions.themes.name,expansions.videos.video_id,expansions.videos.name,expansions.websites.category,expansions.websites.url,expansions.language_supports.language.name,expansions.game_localizations.*,expansions.similar_games.*,expansions.external_games.name,expansions.cover.url,expansions.artworks.url,expansions.age_ratings.*,expansions.franchises.name,expansions.collections.name,expansions.release_dates.platform.*,expansions.expansions.*,expansions.alternative_names.name; where id = (${gameIds});`;
-        const similarGamesResponse = await fetchWithRetry(
-          "https://api.igdb.com/v4/games",
-          query,
-          headerFromApi
-        );
-        // Process each similar game
-        for (const similarGame of similarGamesResponse.data) {
-          // Check if the game already exists in Strapi
+  const categoryMapping = {
+    0: "main_game",
+    1: "dlc_addon",
+    2: "expansion",
+    3: "bundle",
+    4: "standalone_expansion",
+    5: "mod",
+    6: "episode",
+    7: "season",
+    8: "remake",
+    9: "remaster",
+    10: "expanded_game",
+    11: "port",
+    12: "fork",
+    13: "pack",
+    14: "update",
+  };
 
-          const existingGame = await checkIfGameExists(similarGame.slug);
-          let gameId;
-          if (existingGame) {
-            // If the game exists, use its ID
-            gameId = existingGame.id;
-            similarGamesArray.push(gameId);
-          } else {
-            const categoryId = similarGame.category;
-            const categoryName = categoryMapping[categoryId];
-            const gameGenres = await handleGenres(similarGame);
-            const gameModes = await handleGameModes(similarGame);
-            const gamePlayerPerspectives = await handlePlayerPerspectives(
-              similarGame
-            );
-            const gameThemes = await handleThemes(similarGame);
-            const gameKeywords = await handleKeywords(similarGame);
-            const gameAlternativeNames = await handleAlternativeNames(
-              similarGame
-            );
-            const gameEngines = await handleGameEngines(similarGame);
-            const gameLanguageSupports = await handleLanguageSupports(
-              similarGame
-            );
-            const gameInvolvedCompanies = await handleInvolvedCompanies(
-              similarGame
-            );
-            const gameFranchies = await handleFrenchies(similarGame);
-            const externalGames = await handleExternalGames(similarGame);
-            const gameCoverImage = await handleCoverImage(similarGame);
-            const gameBackgroundImage = await handleBackgroundImage(
-              similarGame
-            );
-            const gameScreenShots = await handleScreenShots(similarGame);
-            const gameCollections = await handleCollections(similarGame);
-            const gamePlatforms = await handlePlatforms(similarGame);
-            const gameVideos = await handleVideos(similarGame);
-            const gameWebsiteLinks = await handleWebsiteLinks(similarGame);
-            const promtGeneratedDescription = await getRewrittenDescription(
-              similarGame?.name,
-              similarGame?.summary
-            );
-            const gameReleaseDates = await handleReleaseDates(
-              similarGame,
-              headerFromApi
-            );
-            const gameSeriesOrSpinOff = await handleSeriesAndSpinOff(
-              similarGame,
-              headerFromApi
-            );
-            // const expansionGames = await handleGameExpansions(
-            //   parsedData,
-            //   headerFromApi
-            // );
-            const relatedGames = await handleSimilarGames(
-              { similar_games: similarGame.similar_games || [] },
-              headerFromApi,
-              [...processedGames, similarGame.id]
-            );
-            const newGame = {
-              title: similarGame.name || null,
-              slug: similarGame.slug || null,
-              site_url: similarGame.url,
-              genres: gameGenres || [],
-              game_modes: gameModes || [],
-              player_perspective: gamePlayerPerspectives || [],
-              themes: gameThemes || [],
-              keywords: gameKeywords || [],
-              alternative_names: gameAlternativeNames || [],
-              game_engines: gameEngines || [],
-              language_supports: gameLanguageSupports || [],
-              involved_companies:
-                (gameInvolvedCompanies &&
-                  gameInvolvedCompanies?.involvedCompaniesArray) ||
-                [],
-              publisher:
-                (gameInvolvedCompanies &&
-                  gameInvolvedCompanies?.publishersArray) ||
-                [],
-              developer:
-                gameInvolvedCompanies &&
-                gameInvolvedCompanies?.developersArray &&
-                gameInvolvedCompanies?.developersArray.length > 0
-                  ? gameInvolvedCompanies?.developersArray
-                  : [],
-              franchises: gameFranchies || [],
-              external_games: externalGames || [],
-              coverImage: gameCoverImage || null,
-              image: gameBackgroundImage || null,
-              ...(gameScreenShots &&
-                gameScreenShots.length > 0 && {
-                  screenshots: gameScreenShots,
-                }),
-              collections: gameCollections || [],
-              platforms: gamePlatforms || [],
-              videos: gameVideos || [],
-              website_links: gameWebsiteLinks || [],
-              description: promtGeneratedDescription || null,
-              releaseByPlatforms: {
-                release:
-                  gameReleaseDates?.releaseByPlatformsArray &&
-                  gameReleaseDates?.releaseByPlatformsArray.length > 0
-                    ? gameReleaseDates?.releaseByPlatformsArray
-                    : [],
-              },
-              devices: gameReleaseDates?.devicesArray || [],
-              firstReleaseDate: gameReleaseDates?.earliestReleaseDate || null,
-              latestReleaseDate: gameReleaseDates?.latestReleaseDate || null,
-              // game_category: categoryName || null,
-              aggregateRating: similarGame.aggregated_rating || null,
-              series: gameSeriesOrSpinOff?.seriesName || null,
-              isSpinOff: gameSeriesOrSpinOff?.isSpinOffName || null,
-              // expansions: expansionGames || [],
-              related_games: relatedGames || [],
-              published_at: addPublishedAtIfRequired(similarGame),
-              isUpdatedFromScript: true,
-            };
-            const createdGame = await createGameEntryInStrapi(newGame);
-            gameId = createdGame.data.id;
-            similarGamesArray.push(gameId);
-          }
-        }
-        console.log(similarGamesArray, "similarGamesArray");
-        // Return the array of similar game IDs
-        return similarGamesArray;
-      } catch (error) {
-        console.error(`Failed to handle similar games: ${error.message}`);
-        return [];
-      }
-    }
+  let similarGamesArray = [];
+
+  // Normalize string-based similar_games
+  if (typeof parsedData.similar_games === "string") {
+    parsedData.similar_games = parsedData.similar_games
+      .replace(/{|}/g, "")
+      .split(",")
+      .map((id) => parseInt(id.trim(), 10))
+      .filter(Boolean);
   }
-  return [];
+
+  const uniqueGameIds = parsedData.similar_games.filter(
+    (id) => !processedGames.has(id)
+  );
+
+  if (uniqueGameIds.length === 0) return [];
+
+  try {
+    const gameIdsString = uniqueGameIds.join(",");
+    const query = `fields *,genres.name,game_modes.name,player_perspectives.name,game_engines.name,involved_companies.developer,involved_companies.publisher,involved_companies.company.name,keywords.name,platforms.name,release_dates.*,screenshots.url,themes.name,videos.video_id,videos.name,websites.category,websites.url,language_supports.language.name,game_localizations.*,similar_games.*,external_games.name,cover.url,artworks.url,age_ratings.*,franchises.name,collections.name,release_dates.platform.*,alternative_names.name,similar_games.genres.name,similar_games.game_modes.name,similar_games.player_perspectives.name,similar_games.game_engines.name,similar_games.involved_companies.developer,similar_games.involved_companies.publisher,similar_games.involved_companies.company.name,similar_games.keywords.name,similar_games.platforms.name,similar_games.release_dates.*,similar_games.screenshots.url,similar_games.themes.name,similar_games.videos.video_id,similar_games.videos.name,similar_games.websites.category,similar_games.websites.url,similar_games.language_supports.language.name,similar_games.game_localizations.*,similar_games.similar_games.*,similar_games.external_games.name,similar_games.cover.url,similar_games.artworks.url,similar_games.age_ratings.*,similar_games.franchises.name,similar_games.collections.name,similar_games.release_dates.platform.*,expansions.*,similar_games.alternative_names.name,expansions.genres.name,expansions.game_modes.name,expansions.player_perspectives.name,expansions.game_engines.name,expansions.involved_companies.developer,expansions.involved_companies.publisher,expansions.involved_companies.company.name,expansions.keywords.name,expansions.platforms.name,expansions.release_dates.*,expansions.screenshots.url,expansions.themes.name,expansions.videos.video_id,expansions.videos.name,expansions.websites.category,expansions.websites.url,expansions.language_supports.language.name,expansions.game_localizations.*,expansions.similar_games.*,expansions.external_games.name,expansions.cover.url,expansions.artworks.url,expansions.age_ratings.*,expansions.franchises.name,expansions.collections.name,expansions.release_dates.platform.*,expansions.expansions.*,expansions.alternative_names.name; where id = (${gameIdsString});`;
+
+    const similarGamesResponse = await fetchWithRetry(
+      "https://api.igdb.com/v4/games",
+      query,
+      headerFromApi
+    );
+
+    for (const similarGame of similarGamesResponse.data) {
+      const gameId = similarGame.id;
+
+      // Prevent processing already visited games
+      if (processedGames.has(gameId)) continue;
+      processedGames.add(gameId);
+
+      const existingGame = await checkIfGameExists(similarGame.slug);
+      if (existingGame) {
+        similarGamesArray.push(existingGame.id);
+        continue;
+      }
+
+      const categoryId = similarGame.category;
+      const categoryName = categoryMapping[categoryId];
+
+      const [
+        gameGenres,
+        gameModes,
+        gamePlayerPerspectives,
+        gameThemes,
+        gameKeywords,
+        gameAlternativeNames,
+        gameEngines,
+        gameLanguageSupports,
+        gameInvolvedCompanies,
+        gameFranchies,
+        externalGames,
+        gameCoverImage,
+        gameBackgroundImage,
+        gameScreenShots,
+        gameCollections,
+        gamePlatforms,
+        gameVideos,
+        gameWebsiteLinks,
+        promtGeneratedDescription,
+        gameReleaseDates,
+        gameSeriesOrSpinOff,
+      ] = await Promise.all([
+        handleGenres(similarGame),
+        handleGameModes(similarGame),
+        handlePlayerPerspectives(similarGame),
+        handleThemes(similarGame),
+        handleKeywords(similarGame),
+        handleAlternativeNames(similarGame),
+        handleGameEngines(similarGame),
+        handleLanguageSupports(similarGame),
+        handleInvolvedCompanies(similarGame),
+        handleFrenchies(similarGame),
+        handleExternalGames(similarGame),
+        handleCoverImage(similarGame),
+        handleBackgroundImage(similarGame),
+        handleScreenShots(similarGame),
+        handleCollections(similarGame),
+        handlePlatforms(similarGame),
+        handleVideos(similarGame),
+        handleWebsiteLinks(similarGame),
+        getRewrittenDescription(similarGame?.name, similarGame?.summary),
+        handleReleaseDates(similarGame, headerFromApi),
+        handleSeriesAndSpinOff(similarGame, headerFromApi),
+      ]);
+
+      const relatedGames = await handleSimilarGames(
+        { similar_games: similarGame.similar_games || [] },
+        headerFromApi,
+        processedGames
+      );
+
+      const newGame = {
+        title: similarGame.name || null,
+        slug: similarGame.slug || null,
+        site_url: similarGame.url,
+        genres: gameGenres || [],
+        game_modes: gameModes || [],
+        player_perspective: gamePlayerPerspectives || [],
+        themes: gameThemes || [],
+        keywords: gameKeywords || [],
+        alternative_names: gameAlternativeNames || [],
+        game_engines: gameEngines || [],
+        language_supports: gameLanguageSupports || [],
+        involved_companies: gameInvolvedCompanies?.involvedCompaniesArray || [],
+        publisher: gameInvolvedCompanies?.publishersArray || [],
+        developer: gameInvolvedCompanies?.developersArray || [],
+        franchises: gameFranchies || [],
+        external_games: externalGames || [],
+        coverImage: gameCoverImage || null,
+        image: gameBackgroundImage || null,
+        ...(gameScreenShots?.length > 0 && {
+          screenshots: gameScreenShots,
+        }),
+        collections: gameCollections || [],
+        platforms: gamePlatforms || [],
+        videos: gameVideos || [],
+        website_links: gameWebsiteLinks || [],
+        description: promtGeneratedDescription || null,
+        releaseByPlatforms: {
+          release: gameReleaseDates?.releaseByPlatformsArray || [],
+        },
+        devices: gameReleaseDates?.devicesArray || [],
+        firstReleaseDate: gameReleaseDates?.earliestReleaseDate || null,
+        latestReleaseDate: gameReleaseDates?.latestReleaseDate || null,
+        aggregateRating: similarGame.aggregated_rating || null,
+        series: gameSeriesOrSpinOff?.seriesName || null,
+        isSpinOff: gameSeriesOrSpinOff?.isSpinOffName || null,
+        related_games: relatedGames || [],
+        published_at: addPublishedAtIfRequired(similarGame),
+        isUpdatedFromScript: true,
+      };
+
+      const createdGame = await createGameEntryInStrapi(newGame);
+      similarGamesArray.push(createdGame.data.id);
+    }
+
+    console.log(similarGamesArray, "similarGamesArray");
+    return similarGamesArray;
+  } catch (error) {
+    console.error(`Failed to handle similar games: ${error.message}`);
+    return [];
+  }
 };
 
 const updateGameEntryInStrapi = async (gameId, updateData) => {
