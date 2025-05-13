@@ -1143,7 +1143,6 @@ const handleSeriesAndSpinOff = async (parsedData, headerFromApi) => {
   }
 };
 const updateOrCreateGameDataWithNewFeilds = async (dataObj, gameId) => {
-  console.log(dataObj, "dataObj123456789");
   try {
     const updateData = {
       data: {
@@ -1214,7 +1213,7 @@ const updateOrCreateGameDataWithNewFeilds = async (dataObj, gameId) => {
   }
 };
 
-app.listen(3005, () => {
-  console.log(`Example app listening on port ${3005}`);
+app.listen(3006, () => {
+  console.log(`Example app listening on port ${3006}`);
 });
 module.exports = startProcess;
