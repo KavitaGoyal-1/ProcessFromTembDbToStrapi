@@ -146,7 +146,6 @@ function addPublishedAtIfRequired(gameData) {
 const processGames = async (games) => {
   const gamesWithSiteUrl = games.filter((game) => game.url);
   const siteUrls = gamesWithSiteUrl.map((game) => game.url);
-  console.log(siteUrls, "siteUrlssss");
   let updatedDataWithSiteUrl = [];
 
   if (siteUrls.length > 0) {
