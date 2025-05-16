@@ -1388,7 +1388,7 @@ const updateOrCreateGameDataWithNewFeilds = async (dataObj, gameId) => {
   }
 };
 
-app.listen(3006, () => {
-  console.log(`Example app listening on port ${3006}`);
+app.listen(3015, () => {
+  console.log(`Example app listening on port ${3015}`);
 });
 module.exports = startProcess;
