@@ -159,8 +159,10 @@ const processGames = async (games) => {
   }
   for (let i = 0; i < games.length; i++) {
     const game = games[i];
+    console.log(game, "gamemememem12345");
     let updatedData;
     const gamesExistsInDb = await fetchGames(game.slug, game.url);
+    console.log(gamesExistsInDb, "gameExistingindb");
     if (
       gamesExistsInDb &&
       gamesExistsInDb.length > 0 &&
@@ -169,6 +171,7 @@ const processGames = async (games) => {
       updatedData = updatedDataWithSiteUrl.find(
         (data) => data.url === gamesExistsInDb[0]?.site_url
       );
+      console.log(gamesExistsInDb, "kkkkkkkkk");
       if (updatedData) {
         await updateGame(gamesExistsInDb[0]?.id, updatedData);
       }
@@ -1388,7 +1391,12 @@ const updateOrCreateGameDataWithNewFeilds = async (dataObj, gameId) => {
   }
 };
 
-app.listen(3015, () => {
-  console.log(`Example app listening on port ${3015}`);
-});
+// app.listen(3015, () => {
+//   console.log(`Example app listening on port ${3015}`);
+// });
+if (require.main === module) {
+  app.listen(3015, () => {
+    console.log("Server running on port 3015");
+  });
+}
 module.exports = startProcess;

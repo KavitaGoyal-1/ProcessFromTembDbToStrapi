@@ -40,6 +40,7 @@
 
 const connectDB = require("./db");
 const Game = require("./game");
+const mongoose = require("mongoose");
 
 /**
  * Process and remove all game entries from the database
@@ -82,6 +83,9 @@ const processAndRemoveAllGames = async (processFn) => {
 
     if (processedCount === 0) {
       console.log("No games found to process");
+      mongoose.disconnect();
+      console.log("db disconnect");
+      process.exit(0);
     } else {
       console.log(`Processed and removed ${processedCount} games`);
     }
