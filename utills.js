@@ -617,7 +617,7 @@ module.exports.handleWebsiteLinks = async (parsedData, headerFromApi) => {
       const allWebsites = parsedData.websites.map((website) => ({
         id: website.id,
         url: website.url ? website.url : `Unknown (${website.id})`,
-        category: categoryForWebsites[website.category] || "unknown",
+        category: categoryForWebsites[website.type] || "unknown",
       }));
 
       const websiteLinksArray = allWebsites
