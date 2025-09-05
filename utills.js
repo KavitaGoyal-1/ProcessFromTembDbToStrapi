@@ -606,6 +606,7 @@ module.exports.handleWebsiteLinks = async (parsedData, headerFromApi) => {
     16: "epicgames",
     17: "gog",
     18: "discord",
+    19: "bluesky",
   };
 
   if (
@@ -613,11 +614,13 @@ module.exports.handleWebsiteLinks = async (parsedData, headerFromApi) => {
     Array.isArray(parsedData.websites) &&
     parsedData.websites.length > 0
   ) {
+    console.log(parsedData.websites, "parsedData.websitesparsedData.websites");
     try {
       const allWebsites = parsedData.websites.map((website) => ({
         id: website.id,
         url: website.url ? website.url : `Unknown (${website.id})`,
-        category: categoryForWebsites[website.type] || "unknown",
+        // category: categoryForWebsites[website.type] || "unknown",
+        category: (website.type?.type || "unknown").toLowerCase(),
       }));
 
       const websiteLinksArray = allWebsites
@@ -657,6 +660,7 @@ module.exports.handleReleaseDates = async (parsedData) => {
     for (const release of parsedData.release_dates) {
       if (release.platform && release.date) {
         const releaseDate = DateTime.fromSeconds(release.date).toUTC();
+
         releaseDates.push(releaseDate);
 
         const deviceId = await getOrCreateDevice(
