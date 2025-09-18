@@ -197,7 +197,7 @@ const getOrCreatePublishers = async (publisherName, headerFromApi) => {
     const response = await axios.get(`${strapiUrl}/api/publishers`, {
       headers: headerFromApi,
       params: {
-        "filters[name][$eq]": publisherName,
+        "filters[Name][$eq]": publisherName,
       },
     });
 
@@ -232,7 +232,7 @@ const getOrCreateDevelopers = async (developerName, headerFromApi) => {
     const response = await axios.get(`${strapiUrl}/api/developers`, {
       headers: headerFromApi,
       params: {
-        "filters[name][$eq]": developerName,
+        "filters[Name][$eq]": developerName,
       },
     });
 
