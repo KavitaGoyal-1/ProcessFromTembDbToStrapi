@@ -107,6 +107,16 @@ const fetchGames = async (slug, url) => {
   return result.rows;
 };
 
+// const fetchGames = async (startId, limit) => {
+//   console.log(startId, limit, "fetching games from ID:", startId);
+//   const result = await dbClient.query(
+//     "SELECT * FROM games WHERE id >= $1 ORDER BY id ASC LIMIT $2",
+//     [startId, limit]
+//   );
+//   console.log(result.rows.length, "games fetched");
+//   return result.rows;
+// };
+
 const updateGame = async (gameId, updatedData) => {
   const headerFromApi = {
     "Client-ID": CLIENT_ID,
