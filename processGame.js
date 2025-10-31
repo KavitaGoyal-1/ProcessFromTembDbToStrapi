@@ -24,6 +24,14 @@ const {
   getRewrittenDescription,
   handleReleaseDates,
 } = require("./utills");
+const {
+  logUpdatedDataWithSiteUrl,
+  logUpdateData,
+  logToken,
+  logError,
+  logIGDBCall,
+  logProcessingSummary,
+} = require("./bucketLogger");
 require("dotenv").config();
 
 const app = express();
@@ -88,15 +96,25 @@ const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const fetchAccessToken = async () => {
   console.log("inside fetch token");
-  const { data } = await axios.post(TWITCH_AUTH_URL, null, {
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    params: {
-      client_id: CLIENT_ID,
-      client_secret: CLIENT_SECRET,
-      grant_type: "client_credentials",
-    },
-  });
-  accessToken = data.access_token;
+  try {
+    const { data } = await axios.post(TWITCH_AUTH_URL, null, {
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      params: {
+        client_id: CLIENT_ID,
+        client_secret: CLIENT_SECRET,
+        grant_type: "client_credentials",
+      },
+    });
+    accessToken = data.access_token;
+    // Log token to bucket
+    await logToken(accessToken, {
+      source: "fetchAccessToken",
+      timestamp: DateTime.now().toISO(),
+    });
+  } catch (error) {
+    await logError(error, { source: "fetchAccessToken" });
+    throw error;
+  }
 };
 
 const fetchGames = async (slug, url) => {
@@ -166,6 +184,16 @@ const processGames = async (games) => {
 
     updatedDataWithSiteUrl = await fetchFromIGDB(siteUrlQuery);
     console.log(updatedDataWithSiteUrl, "llllllllll");
+    // Log updatedDataWithSiteUrl to bucket
+    await logUpdatedDataWithSiteUrl(updatedDataWithSiteUrl, {
+      siteUrlsCount: siteUrls.length,
+      query: siteUrlQuery,
+    });
+    // Also log as IGDB API call
+    await logIGDBCall(siteUrlQuery, updatedDataWithSiteUrl, {
+      endpoint: "games",
+      method: "fetchBySiteUrl",
+    });
   }
   for (let i = 0; i < games.length; i++) {
     const game = games[i];
@@ -199,16 +227,29 @@ const processGames = async (games) => {
   }
 };
 const fetchFromIGDB = async (query) => {
-  const response = await fetch("https://api.igdb.com/v4/games", {
-    method: "POST",
-    headers: {
-      "Client-ID": CLIENT_ID,
-      Authorization: `Bearer ${accessToken}`,
-    },
-    body: query,
-  });
-  const data = await response.json();
-  return data; // Return the result of the IGDB API call
+  try {
+    const response = await fetch("https://api.igdb.com/v4/games", {
+      method: "POST",
+      headers: {
+        "Client-ID": CLIENT_ID,
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: query,
+    });
+    const data = await response.json();
+    // Log IGDB API call
+    await logIGDBCall(query, data, {
+      endpoint: "games",
+      method: "fetchFromIGDB",
+    });
+    return data; // Return the result of the IGDB API call
+  } catch (error) {
+    await logError(error, {
+      source: "fetchFromIGDB",
+      query,
+    });
+    throw error;
+  }
 };
 
 const startProcess = async (gamesArr) => {
@@ -219,14 +260,32 @@ const startProcess = async (gamesArr) => {
     if (accessToken) {
       const normalizedArr = Array.isArray(gamesArr) ? gamesArr : [gamesArr];
       if (normalizedArr.length > 0) {
+        await logProcessingSummary({
+          gamesCount: normalizedArr.length,
+          games: normalizedArr.map((g) => ({
+            slug: g.slug,
+            url: g.url,
+            name: g.name,
+          })),
+        });
         await processGames(normalizedArr);
       }
+    } else {
+      await logError(new Error("Access token not available"), {
+        source: "startProcess",
+      });
     }
   } catch (err) {
     console.error("Error connecting to the database:", err);
+    await logError(err, {
+      source: "startProcess",
+      gamesArr: Array.isArray(gamesArr) ? gamesArr.length : 1,
+    });
   } finally {
     console.log("3");
-    client.release();
+    if (client) {
+      client.release();
+    }
   }
 };
 
@@ -1202,27 +1261,66 @@ const updateOrCreateGameDataWithNewFeilds = async (dataObj, gameId) => {
       },
     };
     console.log(gameId, "gamemememmememememme", updateData);
+    // Log updateData to bucket before sending to Strapi
+    await logUpdateData(updateData, gameId, {
+      action: gameId ? "update" : "create",
+      strapiUrl,
+    });
     if (gameId) {
-      const response = await axios.put(
-        `${strapiUrl}/api/games/${gameId}`,
-        updateData
-      );
-      if (response.status === 200) {
-        console.log(`Updated game data ID ${gameId}`);
-      } else {
-        console.error(`Failed to update game data ID ${gameId}`);
+      try {
+        const response = await axios.put(
+          `${strapiUrl}/api/games/${gameId}`,
+          updateData
+        );
+        if (response.status === 200) {
+          console.log(`Updated game data ID ${gameId}`);
+          await logProcessingSummary({
+            gameId,
+            action: "update",
+            status: "success",
+            responseId: response.data?.data?.id,
+          });
+        } else {
+          console.error(`Failed to update game data ID ${gameId}`);
+          await logError(
+            new Error(`Failed to update game: Status ${response.status}`),
+            { gameId, updateData }
+          );
+        }
+      } catch (error) {
+        await logError(error, { gameId, updateData, action: "update" });
+        throw error;
       }
     } else {
       console.log("inside create api", `${strapiUrl}/api/games`, updateData);
-      const response = await axios.post(`${strapiUrl}/api/games`, updateData);
-      if (response.status === 200) {
-        console.log(`Created game data ID ${response.data.data?.id}`);
-      } else {
-        console.error(`Failed to create game data ID `);
+      try {
+        const response = await axios.post(`${strapiUrl}/api/games`, updateData);
+        if (response.status === 200) {
+          console.log(`Created game data ID ${response.data.data?.id}`);
+          await logProcessingSummary({
+            gameId: response.data.data?.id,
+            action: "create",
+            status: "success",
+          });
+        } else {
+          console.error(`Failed to create game data ID `);
+          await logError(
+            new Error(`Failed to create game: Status ${response.status}`),
+            { updateData }
+          );
+        }
+      } catch (error) {
+        await logError(error, { updateData, action: "create" });
+        throw error;
       }
     }
   } catch (error) {
     console.error(`Error updating game data: ${error}`);
+    await logError(error, {
+      source: "updateOrCreateGameDataWithNewFeilds",
+      gameId,
+      dataObj: dataObj ? { title: dataObj.title, slug: dataObj.slug } : null,
+    });
   }
 };
 
