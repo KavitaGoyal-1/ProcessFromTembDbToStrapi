@@ -120,7 +120,7 @@ const fetchAccessToken = async () => {
 const fetchGames = async (slug, url) => {
   const result = await dbClient.query(
     "SELECT * FROM games WHERE slug = $1 OR site_url = $2 LIMIT 1",
-    [slug, url]
+    [slug, url],
   );
   return result.rows;
 };
@@ -167,7 +167,7 @@ function addPublishedAtIfRequired(gameData) {
   const allRequiredFieldsPresent = requiredFields.every(
     (field) =>
       (gameData[field] && gameData[field] !== "") ||
-      (field === "coverImage" && gameData?.cover_image)
+      (field === "coverImage" && gameData?.cover_image),
   );
   return allRequiredFieldsPresent ? DateTime.now().toISO() : null;
 }
@@ -207,7 +207,7 @@ const processGames = async (games) => {
       gamesExistsInDb[0]?.site_url
     ) {
       updatedData = updatedDataWithSiteUrl.find(
-        (data) => data.url === gamesExistsInDb[0]?.site_url
+        (data) => data.url === gamesExistsInDb[0]?.site_url,
       );
       if (updatedData) {
         await updateGame(gamesExistsInDb[0]?.id, updatedData);
@@ -217,7 +217,7 @@ const processGames = async (games) => {
 
       // Correctly get the data from updatedDataWithSiteUrl using game.url
       updatedData = updatedDataWithSiteUrl.find(
-        (data) => data.url === game.url
+        (data) => data.url === game.url,
       );
       console.log(updatedData, "llllllllppppppppppp", game);
       if (updatedData) {
@@ -309,7 +309,7 @@ const createGameEntryInStrapi = async (gameData) => {
   } catch (error) {
     console.error(
       "Error creating game entry:",
-      error.response ? error.response.data : error
+      error.response ? error.response.data : error,
     );
   }
 };
@@ -317,7 +317,7 @@ const createGameEntryInStrapi = async (gameData) => {
 const handleSimilarGames = async (
   parsedData,
   headerFromApi,
-  processedGames = new Set()
+  processedGames = new Set(),
 ) => {
   if (!parsedData.similar_games) return [];
 
@@ -351,7 +351,7 @@ const handleSimilarGames = async (
   }
 
   const uniqueGameIds = parsedData.similar_games.filter(
-    (id) => !processedGames.has(id)
+    (id) => !processedGames.has(id),
   );
 
   if (uniqueGameIds.length === 0) return [];
@@ -363,7 +363,7 @@ const handleSimilarGames = async (
     const similarGamesResponse = await fetchWithRetry(
       "https://api.igdb.com/v4/games",
       query,
-      headerFromApi
+      headerFromApi,
     );
 
     for (const similarGame of similarGamesResponse.data) {
@@ -432,7 +432,7 @@ const handleSimilarGames = async (
       const relatedGames = await handleSimilarGames(
         { similar_games: similarGame.similar_games || [] },
         headerFromApi,
-        processedGames
+        processedGames,
       );
 
       const newGame = {
@@ -472,7 +472,7 @@ const handleSimilarGames = async (
         series: gameSeriesOrSpinOff?.seriesName || null,
         isSpinOff: gameSeriesOrSpinOff?.isSpinOffName || null,
         related_games: relatedGames || [],
-        published_at: addPublishedAtIfRequired(similarGame),
+        publishedAt: addPublishedAtIfRequired(similarGame),
         isUpdatedFromScript: true,
       };
 
@@ -492,14 +492,14 @@ const updateGameEntryInStrapi = async (gameId, updateData) => {
   try {
     const response = await axios.put(
       `${strapiUrl}/api/games/${gameId}`,
-      updateData
+      updateData,
     );
     console.log("Game updated successfully:");
     return response.data;
   } catch (error) {
     console.error(
       "Error updating game entry:",
-      error.response ? error.response.data : error
+      error.response ? error.response.data : error,
     );
   }
 };
@@ -507,7 +507,7 @@ const updateGameEntryInStrapi = async (gameId, updateData) => {
 const handleGameExpansions = async (
   parsedData,
   headerFromApi,
-  processedGames = []
+  processedGames = [],
 ) => {
   if (parsedData.expansions) {
     const categoryMapping = {
@@ -542,7 +542,7 @@ const handleGameExpansions = async (
         const expansionGamesResponse = await fetchWithRetry(
           "https://api.igdb.com/v4/games",
           query,
-          headerFromApi
+          headerFromApi,
         );
         // Process each expansion game
         for (const expansionGame of expansionGamesResponse.data) {
@@ -569,25 +569,25 @@ const handleGameExpansions = async (
             const gameGenres = await handleGenres(expansionGame);
             const gameModes = await handleGameModes(expansionGame);
             const gamePlayerPerspectives = await handlePlayerPerspectives(
-              expansionGame
+              expansionGame,
             );
             const gameThemes = await handleThemes(expansionGame);
             const gameKeywords = await handleKeywords(expansionGame);
             const gameAlternativeNames = await handleAlternativeNames(
-              expansionGame
+              expansionGame,
             );
             const gameEngines = await handleGameEngines(expansionGame);
             const gameLanguageSupports = await handleLanguageSupports(
-              expansionGame
+              expansionGame,
             );
             const gameInvolvedCompanies = await handleInvolvedCompanies(
-              expansionGame
+              expansionGame,
             );
             const gameFranchies = await handleFrenchies(expansionGame);
             const externalGames = await handleExternalGames(expansionGame);
             const gameCoverImage = await handleCoverImage(expansionGame);
             const gameBackgroundImage = await handleBackgroundImage(
-              expansionGame
+              expansionGame,
             );
             const gameScreenShots = await handleScreenShots(expansionGame);
             const gameCollections = await handleCollections(expansionGame);
@@ -596,24 +596,24 @@ const handleGameExpansions = async (
             const gameWebsiteLinks = await handleWebsiteLinks(expansionGame);
             const promtGeneratedDescription = await getRewrittenDescription(
               expansionGame?.name,
-              expansionGame?.summary
+              expansionGame?.summary,
             );
             const gameReleaseDates = await handleReleaseDates(
               expansionGame,
-              headerFromApi
+              headerFromApi,
             );
             const gameSeriesOrSpinOff = await handleSeriesAndSpinOff(
               expansionGame,
-              headerFromApi
+              headerFromApi,
             );
             const similarGames = await handleSimilarGames(
               expansionGame,
-              headerFromApi
+              headerFromApi,
             );
             const expansionGames = await handleGameExpansions(
               { expansion_games: expansionGames.expansions || [] },
               headerFromApi,
-              [...processedGames, expansionGame.id]
+              [...processedGames, expansionGame.id],
             );
             //Add data in strapi
             const newGame = {
@@ -671,7 +671,7 @@ const handleGameExpansions = async (
               isSpinOff: gameSeriesOrSpinOff?.isSpinOffName || null,
               related_games: similarGames || [],
               expansions: expansionGames || [],
-              published_at: addPublishedAtIfRequired(parsedData),
+              publishedAt: addPublishedAtIfRequired(parsedData),
               isUpdatedFromScript: true,
               isExpansion: "true",
             };
@@ -748,12 +748,12 @@ const getOrCreateSeason = async (game, headerFromApi) => {
       const gameWebsiteLinks = await handleWebsiteLinks(game);
       const promtGeneratedDescription = await getRewrittenDescription(
         game?.name,
-        game?.summary
+        game?.summary,
       );
       const gameReleaseDates = await handleReleaseDates(game, headerFromApi);
       const gameSeriesOrSpinOff = await handleSeriesAndSpinOff(
         game,
-        headerFromApi
+        headerFromApi,
       );
       const expansionGames = await handleGameExpansions(game, headerFromApi);
       const similarGames = await handleSimilarGames(game, headerFromApi);
@@ -812,7 +812,7 @@ const getOrCreateSeason = async (game, headerFromApi) => {
         isSpinOff: gameSeriesOrSpinOff?.isSpinOffName || null,
         related_games: similarGames || [],
         expansions: expansionGames || [],
-        published_at: addPublishedAtIfRequired(game),
+        publishedAt: addPublishedAtIfRequired(game),
         isUpdatedFromScript: true,
         isSeason: "true",
       };
@@ -832,7 +832,7 @@ const getOrCreateSeason = async (game, headerFromApi) => {
           seasonGame && seasonGame.id
             ? seasonGame.id
             : seasonGame.data && seasonGame.data.id,
-          parentGame
+          parentGame,
         );
       }
       console.log(seasonGame, "seasonFgggggggggggggggggggggggggggg");
@@ -894,7 +894,7 @@ const findOrCreateParentGame = async (parentGameId, headerFromApi) => {
         const gameGenres = await handleGenres(parentGame);
         const gameModes = await handleGameModes(parentGame);
         const gamePlayerPerspectives = await handlePlayerPerspectives(
-          parentGame
+          parentGame,
         );
         const gameThemes = await handleThemes(parentGame);
         const gameKeywords = await handleKeywords(parentGame);
@@ -913,23 +913,23 @@ const findOrCreateParentGame = async (parentGameId, headerFromApi) => {
         const gameWebsiteLinks = await handleWebsiteLinks(parentGame);
         const promtGeneratedDescription = await getRewrittenDescription(
           parentGame?.name,
-          parentGame?.summary
+          parentGame?.summary,
         );
         const gameReleaseDates = await handleReleaseDates(
           parentGame,
-          headerFromApi
+          headerFromApi,
         );
         const gameSeriesOrSpinOff = await handleSeriesAndSpinOff(
           parentGame,
-          headerFromApi
+          headerFromApi,
         );
         const similarGames = await handleSimilarGames(
           parentGame,
-          headerFromApi
+          headerFromApi,
         );
         const expansionGames = await handleGameExpansions(
           parentGame,
-          headerFromApi
+          headerFromApi,
         );
         const sessionGames = await getOrCreateSeason(parentGame, headerFromApi);
         //Add data in strapi
@@ -988,7 +988,7 @@ const findOrCreateParentGame = async (parentGameId, headerFromApi) => {
           related_games: similarGames || [],
           expansions: expansionGames || [],
           isSeason: sessionGames ? "true" : null,
-          published_at: addPublishedAtIfRequired(parentGame),
+          publishedAt: addPublishedAtIfRequired(parentGame),
           isUpdatedFromScript: true,
         };
         // Create the parent game in Strapi
@@ -1012,7 +1012,7 @@ const updateParentGameWithSeasonId = async (parentId, seasonId, parentGame) => {
 
     // Step 3: Add the new season ID if it's not already included
     const updatedSeasonIds = Array.from(
-      new Set([...existingSeasonIds, seasonId])
+      new Set([...existingSeasonIds, seasonId]),
     );
     const updateData = {
       data: {
@@ -1021,12 +1021,12 @@ const updateParentGameWithSeasonId = async (parentId, seasonId, parentGame) => {
     };
     const response = await axios.put(
       `${strapiUrl}/api/games/${parentId}`,
-      updateData
+      updateData,
     );
 
     if (response.status === 200) {
       console.log(
-        `Updated parent game ID ${parentId} with season ID ${seasonId}`
+        `Updated parent game ID ${parentId} with season ID ${seasonId}`,
       );
     } else {
       console.error(`Failed to update parent game ID ${parentId}`);
@@ -1045,7 +1045,7 @@ const getParentGameById = async (parentGameId, headerFromApi) => {
       `fields *,genres.name,game_modes.name,player_perspectives.name,game_engines.name,involved_companies.developer,involved_companies.publisher,involved_companies.company.name,keywords.name,platforms.name,release_dates.*,screenshots.url,themes.name,videos.video_id,videos.name,websites.type.type,websites.url,language_supports.language.name,game_localizations.*,similar_games.*,external_games.name,cover.url,artworks.url,age_ratings.*,franchises.name,collections.name,release_dates.platform.*,alternative_names.name,similar_games.genres.name,similar_games.game_modes.name,similar_games.player_perspectives.name,similar_games.game_engines.name,similar_games.involved_companies.developer,similar_games.involved_companies.publisher,similar_games.involved_companies.company.name,similar_games.keywords.name,similar_games.platforms.name,similar_games.release_dates.*,similar_games.screenshots.url,similar_games.themes.name,similar_games.videos.video_id,similar_games.videos.name,similar_games.websites.type.type,similar_games.websites.url,similar_games.language_supports.language.name,similar_games.game_localizations.*,similar_games.similar_games.*,similar_games.external_games.name,similar_games.cover.url,similar_games.artworks.url,similar_games.age_ratings.*,similar_games.franchises.name,similar_games.collections.name,similar_games.release_dates.platform.*,expansions.*,similar_games.alternative_names.name,expansions.genres.name,expansions.game_modes.name,expansions.player_perspectives.name,expansions.game_engines.name,expansions.involved_companies.developer,expansions.involved_companies.publisher,expansions.involved_companies.company.name,expansions.keywords.name,expansions.platforms.name,expansions.release_dates.*,expansions.screenshots.url,expansions.themes.name,expansions.videos.video_id,expansions.videos.name,expansions.websites.type.type,expansions.websites.url,expansions.language_supports.language.name,expansions.game_localizations.*,expansions.similar_games.*,expansions.external_games.name,expansions.cover.url,expansions.artworks.url,expansions.age_ratings.*,expansions.franchises.name,expansions.collections.name,expansions.release_dates.platform.*,expansions.expansions.*,expansions.alternative_names.name; where id = ${parentGameId};`,
       {
         headers: headerFromApi,
-      }
+      },
     );
     if (response.data && response.data.length > 0) {
       const parentGame = response.data[0];
@@ -1058,7 +1058,7 @@ const getParentGameById = async (parentGameId, headerFromApi) => {
   } catch (error) {
     console.error(
       `Failed to fetch parent game with ID ${parentGameId}:`,
-      error.message
+      error.message,
     );
     return null;
   }
@@ -1088,20 +1088,20 @@ const objectForGame = async (parsedData, headerFromApi) => {
     const gameWebsiteLinks = await handleWebsiteLinks(parsedData);
     const promtGeneratedDescription = await getRewrittenDescription(
       parsedData?.name,
-      parsedData?.summary
+      parsedData?.summary,
     );
     const gameReleaseDates = await handleReleaseDates(
       parsedData,
-      headerFromApi
+      headerFromApi,
     );
     const gameSeriesOrSpinOff = await handleSeriesAndSpinOff(
       parsedData,
-      headerFromApi
+      headerFromApi,
     );
     const similarGames = await handleSimilarGames(parsedData, headerFromApi);
     const expansionGames = await handleGameExpansions(
       parsedData,
-      headerFromApi
+      headerFromApi,
     );
     const sessionGames = await getOrCreateSeason(parsedData, headerFromApi);
     const gameData = {
@@ -1170,7 +1170,7 @@ const fetchWithRetry = async (
   data,
   headers,
   retries = 5,
-  retryCount = 1
+  retryCount = 1,
 ) => {
   try {
     return await axios.post(url, data, { headers });
@@ -1193,7 +1193,7 @@ const handleSeriesAndSpinOff = async (parsedData, headerFromApi) => {
       const collectionMembershipResponse = await fetchWithRetry(
         "https://api.igdb.com/v4/collection_memberships",
         `fields *,collection.*; where game = ${parsedData?.id};`,
-        headerFromApi
+        headerFromApi,
       );
       collectionMembershipResponse.data.forEach((collectionMembership) => {
         if (collectionMembership.type === 1) {
@@ -1253,7 +1253,7 @@ const updateOrCreateGameDataWithNewFeilds = async (dataObj, gameId) => {
         aggregateRating: dataObj.aggregateRating,
         series: dataObj.series || null,
         isSpinOff: dataObj.isSpinOff || null,
-        published_at: addPublishedAtIfRequired(dataObj),
+        publishedAt: addPublishedAtIfRequired(dataObj),
         isUpdatedFromScript: true,
         related_games: dataObj.related_games || [],
         expansions: dataObj.expansions || [],
@@ -1270,7 +1270,7 @@ const updateOrCreateGameDataWithNewFeilds = async (dataObj, gameId) => {
       try {
         const response = await axios.put(
           `${strapiUrl}/api/games/${gameId}`,
-          updateData
+          updateData,
         );
         if (response.status === 200) {
           console.log(`Updated game data ID ${gameId}`);
@@ -1284,7 +1284,7 @@ const updateOrCreateGameDataWithNewFeilds = async (dataObj, gameId) => {
           console.error(`Failed to update game data ID ${gameId}`);
           await logError(
             new Error(`Failed to update game: Status ${response.status}`),
-            { gameId, updateData }
+            { gameId, updateData },
           );
         }
       } catch (error) {
@@ -1306,7 +1306,7 @@ const updateOrCreateGameDataWithNewFeilds = async (dataObj, gameId) => {
           console.error(`Failed to create game data ID `);
           await logError(
             new Error(`Failed to create game: Status ${response.status}`),
-            { updateData }
+            { updateData },
           );
         }
       } catch (error) {
